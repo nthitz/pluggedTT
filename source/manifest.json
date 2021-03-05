@@ -21,7 +21,7 @@
 	},
 	"content_scripts": [
 		{
-			"matches": ["*://*.turntable.fm/*", "*://*.youtube.com/*"],
+			"matches": ["*://*.turntable.fm/*"],
 			"css": ["myStyles.css"],
 			"js": [
 				"webext-options-sync.js",
@@ -32,6 +32,7 @@
 		}
 	],
 	"web_accessible_resources": [
-		"modal.html"
+		"modal.html",
+		"localContextScript.js.txt"
 	]
 }

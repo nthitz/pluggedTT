@@ -1,0 +1,113 @@
+const defaultOptions = {
+    autobop: true,
+    volume: 0.5,
+}
+
+let options = { ... defaultOptions }
+
+const localStoragePrefix = 'pluggedTT-'
+const checkLocalStorage = () => {
+    Object.keys(options).forEach(opt => {
+        const value = window.localStorage.getItem(`${localStoragePrefix}${opt}`)
+        if (value) {
+            const parsed = JSON.parse(value)
+            options[opt] = parsed
+        }
+    })
+}
+checkLocalStorage()
+
+const saveToLocalStorage = () => {
+    Object.keys(options).forEach(opt => {
+        window.localStorage.setItem(`${localStoragePrefix}${opt}`, JSON.stringify(options[opt]))
+    })
+}
+
+saveToLocalStorage()
+
+const optionsStorage = {
+    getAll: () => options,
+    set: (newOptions) => {
+        options = { ... options, ...newOptions}
+        saveToLocalStorage()
+    }
+}
+
+const runTurntableCode = async () => {
+    const { autobop, volume } = options
+
+    // configure autobopping, check every 10 seconds
+    setInterval(async () => {
+        const { autobop } = await optionsStorage.getAll()
+        const button = document.querySelector('.awesome-button:not(.selected)')
+        const lamed = document.querySelector('.lame-button.selected')
+        if (button && autobop && !lamed) {
+            button.click()
+        }
+    }, 10000)
+
+    // remove old existing modal if there is one
+    let pluggedTTContainer = document.querySelector('.pluggedTT')
+    if (pluggedTTContainer) {
+        exists.parentElement.removeChild(pluggedTTContainer)
+    }
+
+    // inject our  into the page
+    pluggedTTContainer = document.createElement('div')
+    pluggedTTContainer.classList.add('pluggedTT')
+    const template = document.querySelector('#pluggedTTModal')
+    pluggedTTContainer.innerHTML = template.innerHTML
+    document.body.appendChild(pluggedTTContainer)
+
+    // hook up volume input
+    const volumeInput = pluggedTTContainer.querySelector('.volumeInput')
+    volumeInput.value = volume
+    setVideoVolume(volume)
+
+    volumeInput.addEventListener('input', async (event) => {
+        const volume = +event.target.value;
+        setVideoVolume(volume)
+    })
+
+    volumeInput.addEventListener('change', async (event) => {
+        const volume = +event.target.value;
+        await optionsStorage.set({ volume })
+        setVideoVolume(volume)
+    })
+
+
+
+
+    // hook up autobopper
+    const autobopInput = pluggedTTContainer.querySelector('.autobopInput')
+    autobopInput.checked = autobop
+    autobopInput.addEventListener('change', async (event) => {
+        const autobop = event.target.checked
+        await optionsStorage.set({ autobop })
+    })
+}
+
+const setVideoVolume = (volume) => {
+    // for (player in youtube.player) {
+        try {
+
+
+        youtube.player[0].setVolume(volume * 100)
+
+
+        youtube.player[0].playVideo()
+
+        } catch (e) {
+            console.log(e, e.message)
+        }
+}
+
+
+const init = async () => {
+    // perhaps these should be different content scripts! hmm yeah definitely!
+    if (document.location.hostname.match(/turntable.fm/)) {
+        runTurntableCode()
+    }
+}
+
+init()
