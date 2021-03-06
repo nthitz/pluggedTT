@@ -22,7 +22,7 @@
 			"css": ["myStyles.css"],
 			"js": [
 				"contentScript.js"
-			],
+			]
 		}
 	],
 	"web_accessible_resources": [
