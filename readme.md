@@ -6,7 +6,7 @@
 
 Extensions still awaiting approval in the respective stores.
 
-For now drag install the bookmarklet here: https://nthitz.github.io/pluggedTT/
+For now drag install the bookmarklet here: https://nthitz.github.io/pluggedTT/index.html
 
 
 
