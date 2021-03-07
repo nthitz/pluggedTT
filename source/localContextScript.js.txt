@@ -1,11 +1,78 @@
 const defaultOptions = {
     autobop: true,
     volume: 0.5,
+    stickershow: false,
 }
 
 let options = { ... defaultOptions }
 
+
+const coolIds = [
+    "603fc3143f4bfc001a2ffda8", //nt
+    "603fdf043f4bfc001c27d1b2", // Alfie
+]
+let debug = false
+
 const localStoragePrefix = 'pluggedTT-'
+
+let currentSong = null
+
+let nyanStartX = -180 + 68
+let nyanEndX = 500
+let frames = 10
+let dx = (nyanEndX - nyanStartX) / frames
+let nyanCatPosition = {
+    top: 56,
+    left: nyanStartX,
+}
+let updateStickersTimeout = null
+let stickershowEnabled = false;
+
+let log = (...args) => {
+    if (debug) {
+        console.log(...args)
+    }
+}
+const startStickerShow = async () => {
+    if (stickershowEnabled) {
+        clearTimeout(updateStickersTimeout)
+    }
+    const placed = await fetch("https://turntable.fm/api/sticker.place", {
+        "headers": {
+            "accept": "application/json, text/javascript, */*; q=0.01",
+            "accept-language": "en-US,en;q=0.9",
+            "content-type": "application/json; charset=UTF-8",
+            "sec-ch-ua": "\"Chromium\";v=\"88\", \"Google Chrome\";v=\"88\", \";Not A Brand\";v=\"99\"",
+            "sec-ch-ua-mobile": "?0",
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "same-origin",
+            "x-requested-with": "XMLHttpRequest"
+        },
+        "referrer": "https://turntable.fm/profile/stickers",
+        "referrerPolicy": "strict-origin-when-cross-origin",
+        "body": `{"placements":[{"transform":{"rotate":"0deg"},"top":56,"angle":0,"sticker_id":"603bdf45468d7b3b8ae41ee5","left":${nyanCatPosition.left}}],"userid":"603fc3143f4bfc001a2ffda8","userauth":"gBbZFQNuvlbQPItpunrjAJeq","client":"web","decache":1614999096614}`,
+        "method": "POST",
+        "mode": "cors",
+        "credentials": "include"
+    });
+    const response = await placed.json()
+    if (response[0] === false) {
+        console.log(response)
+        stopStickers()
+        return
+    }
+    nyanCatPosition.left += dx
+    if (nyanCatPosition.left > nyanEndX) {
+        nyanCatPosition.left = nyanStartX
+    }
+
+    updateStickersTimeout = setTimeout(startStickerShow, 1000)
+}
+const stopStickers = () => {
+    clearTimeout(updateStickersTimeout)
+}
+
 const checkLocalStorage = () => {
     Object.keys(options).forEach(opt => {
         const value = window.localStorage.getItem(`${localStoragePrefix}${opt}`)
@@ -33,81 +100,165 @@ const optionsStorage = {
     }
 }
 
+// configure autobopping, check every 10 seconds
+const autobopVote = async () => {
+    log('ab vote call')
+    const { autobop } = await optionsStorage.getAll()
+    const button = document.querySelector('.awesome-button:not(.selected)')
+    const lamed = document.querySelector('.lame-button.selected')
+    if (button && autobop && !lamed) {
+        log('ab click')
+        button.click()
+    }
+}
+
 const runTurntableCode = async () => {
-    const { autobop, volume } = options
+    const { autobop, volume, stickershow } = options
 
-    // configure autobopping, check every 10 seconds
-    setInterval(async () => {
-        const { autobop } = await optionsStorage.getAll()
-        const button = document.querySelector('.awesome-button:not(.selected)')
-        const lamed = document.querySelector('.lame-button.selected')
-        if (button && autobop && !lamed) {
-            button.click()
-        }
-    }, 10000)
+    if (turntable && turntable.socket) {
+        log('add socket listener')
+        turntable.socket.addEventListener('message', messageString => {
+            const message = JSON.parse(messageString)
+            if (message.room && message.room.metadata && message.room.metadata.current_song) {
+                currentSong = message.room.metadata.current_song
+            }
 
-    // remove old existing modal if there is one
-    let pluggedTTContainer = document.querySelector('.pluggedTT')
-    if (pluggedTTContainer) {
-        exists.parentElement.removeChild(pluggedTTContainer)
+            if (message.command === 'newsong') {
+                // get around anti idle stuff..
+                $(window).focus()
+
+                log(currentSong)
+                if (currentSong) {
+                    const djid = currentSong.djid
+                    const me = turntable.user.id
+                    log(djid, me)
+                    if (djid !== me) {
+                        scheduleAutobop()
+                        stopStickers()
+                    }
+                }
+                // checkForStickerShow()
+            }
+        })
     }
 
-    // inject our  into the page
-    pluggedTTContainer = document.createElement('div')
-    pluggedTTContainer.classList.add('pluggedTT')
-    const template = document.querySelector('#pluggedTTModal')
-    pluggedTTContainer.innerHTML = template.innerHTML
-    document.body.appendChild(pluggedTTContainer)
+    setTimeout(() => {
+        // remove old existing modal if there is one
+        let pluggedTTContainer = document.querySelector('.pluggedTT')
+        if (pluggedTTContainer) {
+            pluggedTTContainer.parentElement.removeChild(pluggedTTContainer)
+        }
 
-    // hook up volume input
-    const volumeInput = pluggedTTContainer.querySelector('.volumeInput')
-    volumeInput.value = volume
-    setVideoVolume(volume)
+        // inject our  into the page
+        pluggedTTContainer = document.createElement('div')
+        pluggedTTContainer.classList.add('pluggedTT')
+        const template = document.querySelector('#pluggedTTModal')
+        pluggedTTContainer.innerHTML = template.innerHTML
+        document.body.appendChild(pluggedTTContainer)
 
-    volumeInput.addEventListener('input', async (event) => {
-        const volume = +event.target.value;
+        // hook up volume input
+        const volumeInput = pluggedTTContainer.querySelector('.volumeInput')
+        volumeInput.value = volume
         setVideoVolume(volume)
-    })
 
-    volumeInput.addEventListener('change', async (event) => {
-        const volume = +event.target.value;
-        await optionsStorage.set({ volume })
-        setVideoVolume(volume)
-    })
+        volumeInput.addEventListener('input', async (event) => {
+            const volume = +event.target.value;
+            setVideoVolume(volume)
+        })
+
+        volumeInput.addEventListener('change', async (event) => {
+            const volume = +event.target.value;
+            await optionsStorage.set({ volume })
+            setVideoVolume(volume)
+        })
+
+
+        // hook up autobopper
+        const autobopInput = pluggedTTContainer.querySelector('.autobopInput')
+        autobopInput.checked = autobop
+        autobopInput.addEventListener('change', async (event) => {
+            const autobop = event.target.checked
+            await optionsStorage.set({ autobop })
+            scheduleAutobop()
+        })
+        scheduleAutobop()
+
+        // hook up stickershow
+        const stickershowInput = pluggedTTContainer.querySelector('.stickershowInput')
+        stickershowInput.checked = stickershow
+        stickershowInput.addEventListener('change', async (event) => {
+            const stickershow = event.target.checked
+            await optionsStorage.set({ stickershow })
+            if (stickershow) {
+                checkForStickerShow()
+            } else {
+                stopStickers()
+            }
+        })
+
+        if (coolIds.includes(turntable.user.id)) {
+            debug = true
+            pluggedTTContainer.querySelector('.hidden').classList.remove('hidden')
+        }
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.visible) {
+                // checkForStickerShow()
+                scheduleAutobop()
+                $(window).focus()
+            }
+        })
+
+        // might need this for long songs
+        setInterval(() => {
+            $(window).focus()
+        }, 1000 * 60)
+    }, 1)
 
 
 
+}
 
-    // hook up autobopper
-    const autobopInput = pluggedTTContainer.querySelector('.autobopInput')
-    autobopInput.checked = autobop
-    autobopInput.addEventListener('change', async (event) => {
-        const autobop = event.target.checked
-        await optionsStorage.set({ autobop })
-    })
+const checkForStickerShow = () => {
+    const { stickershow } = options
+
+    if (coolIds.includes(turntable.user.id) && stickershow && currentSong && turntable.user.id === currentSong.djid) {
+        startStickerShow()
+    }
+}
+
+const scheduleAutobop = () => {
+    log('schedule ab')
+    const autobopTimer = Math.random() * 1000 + 1000
+    setTimeout(autobopVote, autobopTimer)
 }
 
 const setVideoVolume = (volume) => {
-    // for (player in youtube.player) {
-        try {
-
-
+    try {
         youtube.player[0].setVolume(volume * 100)
-
-
         youtube.player[0].playVideo()
-
-        } catch (e) {
-            console.log(e, e.message)
-        }
+    } catch (e) {
+        log(e, e.message)
+        setTimeout(() => setVideoVolume(volume), 100)
+    }
 }
 
 
 const init = async () => {
     // perhaps these should be different content scripts! hmm yeah definitely!
     if (document.location.hostname.match(/turntable.fm/)) {
-        runTurntableCode()
+        const waitForTurntable = () => {
+            if (turntable) {
+                runTurntableCode()
+                setTimeout(runTurntableCode, 3000)
+            } else {
+                console.log('waiting')
+                setTimeout(waitForTurntable, 100)
+            }
+        }
+        waitForTurntable()
     }
 }
+
 
 init()

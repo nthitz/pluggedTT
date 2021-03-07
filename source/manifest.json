@@ -28,5 +28,11 @@
 	"web_accessible_resources": [
 		"modal.html",
 		"localContextScript.js.txt"
-	]
+	],
+	"browser_specific_settings": {
+		"gecko": {
+			"id": "ttpluggedin",
+			"strict_min_version": "42.0"
+		}
+	}
 }
