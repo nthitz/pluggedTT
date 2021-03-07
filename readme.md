@@ -4,9 +4,12 @@
 
 -![Sample extension output](screen.jpg.png)
 
-Extensions still awaiting approval in the respective stores.
 
-For now drag you can install the bookmarklet here: https://nthitz.github.io/pluggedTT/index.html
+Chrome Extension: https://chrome.google.com/webstore/detail/tt-plugged-in/edoelilfhbiliocedcghdffjnbnplcfb?
+
+Firefox Extension: https://addons.mozilla.org/en-US/firefox/addon/ttpluggedin/
+
+Or install the bookmarklet here: https://nthitz.github.io/pluggedTT/index.html
 
 
 
