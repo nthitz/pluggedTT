@@ -10,7 +10,8 @@
 		"watch": "parcel watch source/manifest.json --dist-dir distribution --no-cache --no-hmr",
 		"chrome": "bestzip chrome.zip distribution/",
 		"firefox": "cd distribution/ && bestzip ../firefox.zip *",
-		"source": "bestzip source.zip source/"
+		"source": "bestzip source.zip source/",
+		"zip": "npm run chrome && npm run firefox && npm run source"
 	},
 	"browserslist": [
 		"last 1 Chrome version",

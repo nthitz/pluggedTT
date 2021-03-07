@@ -1,0 +1,6 @@
+uses https://github.com/fregante/browser-extension-template for cross browser extension apis
+
+build:
+
+npm install
+npm run build
