@@ -229,7 +229,7 @@ const checkForStickerShow = () => {
 
 const scheduleAutobop = () => {
     log('schedule ab')
-    const autobopTimer = Math.random() * 1000 + 1000
+    const autobopTimer = Math.random() * 10000 + 10000
     setTimeout(autobopVote, autobopTimer)
 }
 
