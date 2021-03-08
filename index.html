@@ -1,5 +1,6 @@
 <html>
     <head>
+    <title>TT Plugged In</title>
     <style>
         body {
             text-align: center;;
@@ -14,15 +15,16 @@
             font-size: 4em;
         }
     </style>
+
     </head>
 <body>
     <div>
         <img src="https://raw.githubusercontent.com/nthitz/pluggedTT/master/screen.jpg.png">
     </div>
-    <h2>TT Plugged In Bookmarklet</h2>
+    <h2>TT Plugged In </h2>
 
     <div>
-        Drag this link to your bookmarks bar: <br />
+        Bookmarklet: Drag this link to your bookmarks bar: <br />
         <a class='bm' href="javascript:(function()%7Basync%20function%20init()%20%7B%2F*%20https%3A%2F%2Fmrcoles.com%2Fbookmarklet%2F%20*%2Fconst%20cssFetch%20%3D%20await%20fetch(%22https%3A%2F%2Fraw.githubusercontent.com%2Fnthitz%2FpluggedTT%2Fmaster%2Fsource%2FmyStyles.css%22)%3Bconst%20cssText%20%3D%20await%20cssFetch.text()%3Bconst%20style%20%3D%20document.createElement('style')%3Bstyle.innerHTML%20%3D%20cssText%3Bdocument.body.appendChild(style)%3Bconst%20templateFetch%20%3D%20await%20fetch(%22https%3A%2F%2Fraw.githubusercontent.com%2Fnthitz%2FpluggedTT%2Fmaster%2Fsource%2Fmodal.html%22)%3Bconst%20templateText%20%3D%20await%20templateFetch.text()%3Bconst%20modal%20%3D%20document.createElement('template')%3Bmodal.id%20%3D%20'pluggedTTModal'%3Bmodal.innerHTML%20%3D%20templateText%3Bdocument.body.appendChild(modal)%3Bconst%20scriptFetch%20%3D%20await%20fetch(%22https%3A%2F%2Fraw.githubusercontent.com%2Fnthitz%2FpluggedTT%2Fmaster%2Fsource%2FlocalContextScript.js.txt%22)%3Bconst%20scriptSrc%20%3D%20await%20scriptFetch.text()%3Bconst%20script%20%3D%20document.createElement('script')%3Bscript.innerHTML%20%3D%20scriptSrc%3Bdocument.body.appendChild(script)%3B%7Dinit()%7D)()">ttPluggedIn</a>
     </div>
     <div>
