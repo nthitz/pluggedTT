@@ -27,7 +27,8 @@ let nyanCatPosition = {
 }
 let updateStickersTimeout = null
 let stickershowEnabled = false;
-
+let unmutedVolume = null
+let unmuteWhenSongIsDone = false
 let log = (...args) => {
     if (debug) {
         console.log(...args)
@@ -115,6 +116,7 @@ const autobopVote = async () => {
 const runTurntableCode = async () => {
     const { autobop, volume, stickershow } = options
 
+    let newSongCallbacks = []
     if (turntable && turntable.socket) {
         log('add socket listener')
         turntable.socket.addEventListener('message', messageString => {
@@ -137,6 +139,7 @@ const runTurntableCode = async () => {
                         stopStickers()
                     }
                 }
+                newSongCallbacks.forEach(cb => cb(message))
                 // checkForStickerShow()
             }
         })
@@ -163,15 +166,85 @@ const runTurntableCode = async () => {
 
         volumeInput.addEventListener('input', async (event) => {
             const volume = +event.target.value;
+            unmutedVolume = null
+            unmuteWhenSongIsDone = false
             setVideoVolume(volume)
         })
 
         volumeInput.addEventListener('change', async (event) => {
             const volume = +event.target.value;
+            unmutedVolume = null
+            unmuteWhenSongIsDone = false
             await optionsStorage.set({ volume })
             setVideoVolume(volume)
         })
 
+        const muteButton = pluggedTTContainer.querySelector('.muteButton')
+        const toggleMute = () => {
+            if (unmutedVolume === null) {
+                unmutedVolume = options.volume
+                volumeInput.value = 0
+                setVideoVolume(0)
+            } else {
+                setVideoVolume(unmutedVolume)
+                console.log('unmute')
+                console.log(unmutedVolume)
+                volumeInput.value = unmutedVolume
+                console.log(volumeInput.volume)
+                unmutedVolume = null
+            }
+        }
+        muteButton.addEventListener('click', toggleMute)
+
+
+        const muteUntilNextSong = pluggedTTContainer.querySelector('.muteUntilNext')
+        muteUntilNextSong.addEventListener('click', () => {
+            if (unmutedVolume === null) {
+                toggleMute()
+                unmuteWhenSongIsDone = true
+            }
+
+        })
+        newSongCallbacks.push((message) => {
+            if (unmuteWhenSongIsDone) {
+                toggleMute()
+                unmuteWhenSongIsDone = false
+            }
+        })
+
+        const shuffleButton = pluggedTTContainer.querySelector('.shufflePlaylist')
+        let shuffleCount = 0
+        let shuffleTimeout = null
+        shuffleButton.addEventListener('click', () => {
+            if (shuffleCount !== 0) {
+                const cancel = window.confirm('Stop shuffling?')
+                if (cancel) {
+                    clearTimeout(shuffleTimeout)
+                    shuffleCount = 0
+                    alert('shuffling stopped, refresh or switch playlists to see updated playlist')
+                    shuffleButton.value = 'Shuffle Playlist'
+                    return
+                }
+            }
+            const doit = window.confirm(`Are you sure you want to shuffle the playlist named "${turntable.playlist.activePlaylist}"? You'll need to refresh after to see the results.`)
+            if (!doit) { return }
+            shuffleCount = turntable.playlist.fileids.length
+            shuffle()
+        })
+        const shuffle = async () => {
+            if (shuffleCount <= 0) {
+                shuffleButton.value = 'Shuffle Playlist'
+                alert('shuffle complete, refresh or switch playlists to see updated playlist')
+            } else {
+                shuffleButton.value = `Shuffling ${shuffleCount}`
+                // this shuffles I guess?
+                const from = ~~(Math.random() * turntable.playlist.fileids.length)
+                const to = ~~(Math.random() * turntable.playlist.fileids.length)
+                await turntable.playlist.reorder(from, to)
+                shuffleCount --
+                shuffleTimeout = setTimeout(shuffle, 1000)
+            }
+        }
 
         // hook up autobopper
         const autobopInput = pluggedTTContainer.querySelector('.autobopInput')

@@ -13,3 +13,16 @@
 .hidden {
     display: none;
 }
+
+.miniplayer .pluggedTT {
+    z-index: 1000;
+    background-color: rgba(0, 0, 0, 0.5);
+    right: 1em;
+}
+.pluggedTT .muteButton {
+    cursor: pointer;
+}
+
+.pluggedTT input {
+    padding: 0.1em;
+}
