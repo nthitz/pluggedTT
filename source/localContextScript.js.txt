@@ -306,13 +306,29 @@ const scheduleAutobop = () => {
     setTimeout(autobopVote, autobopTimer)
 }
 
+let retries = 20
+let retrySetVolumeTimeout = null
 const setVideoVolume = (volume) => {
     try {
         youtube.player[0].setVolume(volume * 100)
         youtube.player[0].playVideo()
     } catch (e) {
         log(e, e.message)
-        setTimeout(() => setVideoVolume(volume), 100)
+        retries --
+        if (retries) {
+            clearTimeout(retrySetVolumeTimeout)
+            retrySetVolumeTimeout= setTimeout(() => setVideoVolume(volume), 1000)
+        }
+    }
+    try {
+        soundcloudplayer.setVolume(volume)
+    } catch (e) {
+        log(e, e.message)
+        retries --
+        if (retries) {
+            clearTimeout(retrySetVolumeTimeout)
+            retrySetVolumeTimeout= setTimeout(() => setVideoVolume(volume), 1000)
+        }
     }
 }
 
