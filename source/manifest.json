@@ -1,6 +1,6 @@
 {
 	"name": "TT plugged in",
-	"version": "0.0.0.4",
+	"version": "0.0.0.8",
 	"description": "TT plugged in provides autobopping, and volume control among others",
 	"homepage_url": "https://github.com/nthitz/pluggedTT",
 	"manifest_version": 2,
