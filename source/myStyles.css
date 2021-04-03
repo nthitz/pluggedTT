@@ -26,3 +26,24 @@
 .pluggedTT input {
     padding: 0.1em;
 }
+
+.pluggedTT .playlistFeatureButton input {
+    display: none;
+}
+.pluggedTT .playlistFeatureButton.hide input.show {
+    display: block;
+}
+.pluggedTT .playlistFeatureButton.show input.hide {
+    display: block;
+}
+.pluggedTT .playlistFeatures {
+    display: none;
+}
+.pluggedTT .playlistFeatures.show {
+    display: block;
+}
+
+.pluggedTT .downloadPlaylist {
+    display: none;
+    color: #fff;
+}

@@ -114,7 +114,7 @@ const autobopVote = async () => {
 }
 
 const runTurntableCode = async () => {
-    const { autobop, volume, stickershow } = options
+    const { autobop, volume, stickershow, playlistOptionsVisible } = options
 
     let newSongCallbacks = []
     if (turntable && turntable.socket) {
@@ -212,6 +212,19 @@ const runTurntableCode = async () => {
             }
         })
 
+        const showHideButtons = [...pluggedTTContainer.querySelectorAll('.playlistFeatureButton input')]
+        showHideButtons.forEach(button =>
+            button.addEventListener('click', async () => {
+                const buttonContainer = pluggedTTContainer.querySelector('.playlistFeatureButton')
+                const newValue = !options.playlistOptionsVisible
+                buttonContainer.classList.toggle('show', newValue)
+                buttonContainer.classList.toggle('hide', !newValue)
+                pluggedTTContainer.querySelector('.playlistFeatures').classList.toggle('show', newValue)
+                await optionsStorage.set({ playlistOptionsVisible: newValue })
+            })
+        )
+        pluggedTTContainer.querySelector('.playlistFeatures').classList.toggle('show', playlistOptionsVisible)
+
         const shuffleButton = pluggedTTContainer.querySelector('.shufflePlaylist')
         let shuffleCount = 0
         let shuffleTimeout = null
@@ -245,6 +258,37 @@ const runTurntableCode = async () => {
                 shuffleTimeout = setTimeout(shuffle, 1000)
             }
         }
+        const exportPlaylistButton = pluggedTTContainer.querySelector('.exportPlaylist')
+        exportPlaylistButton.addEventListener('click', async () => {
+            const data = turntable.playlist.fileids
+                .map(d => turntable.playlist.songsByFid[d])
+                .map(d => {
+                    let url = ''
+                    let isYT = false
+                    let isSC = false
+                    if (d.source === 'yt') {
+                        isYT = true
+                    } else if (d.source === 'sc') {
+                        isSC = true
+                    } else if (d.metadata.scid) {
+                        isSC = true
+                    } else if (d.metadata.ytid) {
+                        isYT = true
+                    }
+                    if (isYT) {
+                        url = `https://www.youtube.com/watch?v=${d.sourceid}`
+                    } else if (isSC) {
+                        url = `https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/${d.sourceid}`
+                    }
+                    return `${d.metadata.song},${d.metadata.artist},${url}`
+                }).join('\n')
+            const headers = `song,artist,url\n`
+            const full = headers + data
+            var pom = pluggedTTContainer.querySelector('.downloadPlaylist')
+            pom.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(full));
+            pom.setAttribute('download', `${turntable.playlist.activePlaylist}.txt`);
+            pom.style.display = 'inline'
+        })
 
         // hook up autobopper
         const autobopInput = pluggedTTContainer.querySelector('.autobopInput')
@@ -310,18 +354,7 @@ let retries = 20
 let retrySetVolumeTimeout = null
 const setVideoVolume = (volume) => {
     try {
-        youtube.player[0].setVolume(volume * 100)
-        youtube.player[0].playVideo()
-    } catch (e) {
-        log(e, e.message)
-        retries --
-        if (retries) {
-            clearTimeout(retrySetVolumeTimeout)
-            retrySetVolumeTimeout= setTimeout(() => setVideoVolume(volume), 1000)
-        }
-    }
-    try {
-        soundcloudplayer.setVolume(volume)
+        turntablePlayer.setVolume(volume * 4)
     } catch (e) {
         log(e, e.message)
         retries --

@@ -2,8 +2,18 @@
     <div>Autobop: <input class="autobopInput" type="checkbox" /></div>
     <div><span class='muteButton'>Volume:</span> <input class="volumeInput" type="range" step="0.01" max="1" min="0" /></div>
     <div><input class='muteUntilNext' type='button' value='Mute Until Next Song' /></div>
-    <div><input class='shufflePlaylist' type='button' value='Shuffle Playlist' /></div>
     <div class="hidden">
         <div>stickershow: <input class="stickershowInput" type="checkbox" /></div>
+    </div>
+    <div class='playlistFeatureButton show'>
+        <input type="button" class="show" value='Show Playlist features'/>
+        <input type="button" class="hide" value='Hide Playlist features'/>
+    </div>
+    <div class='playlistFeatures'>
+        <div><input class='shufflePlaylist' type='button' value='Shuffle Playlist' /></div>
+        <div>
+            <input class='exportPlaylist' type='button' value='Export Playlist' />
+            <a class='downloadPlaylist'>Download Playlist</a>
+        </div>
     </div>
 </div>
